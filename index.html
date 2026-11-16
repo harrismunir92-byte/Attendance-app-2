@@ -95,6 +95,10 @@ dialog{border-radius:16px;box-shadow:0 30px 60px -20px rgba(0,0,0,.5)}
 .qs button:hover{background:rgba(255,255,255,.2)}
 .qs button.on{background:#fff;color:#1b2f8f;font-weight:700;border-color:#fff}
 .qi{margin:12px 0 0;opacity:.9;font-size:13px}
+.qc input[type=time]{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.28);color-scheme:dark;width:120px}
+.cal td{min-width:44px}.cal small{display:block;font-size:10px;line-height:1.25;color:var(--mute);font-weight:500}
+.cal td.sm,.cal th.sm{min-width:34px;font-weight:700}.cal td.sm{background:var(--bg)}
+.lt,.cal small.lt{color:var(--r);font-weight:600}
 </style>
 <script src="xlsx.full.min.js"></script>
 <script src="jspdf.umd.min.js"></script>
@@ -159,10 +163,12 @@ function qpanel(){
  const E=S.emps;if(!E.length)return '<p class="hd">Add employees to start marking attendance.</p>';
  const id=E.some(e=>e.id===qsel)?qsel:E[0].id,r=rec(today,id);
  const B=[['P','Present'],['HD','Half day'],['A','Absent'],['PL','Paid leave'],['UL','Unpaid leave']];
- return `<div class="qc"><select id="qe" aria-label="Employee" onchange="qsel=this.value;render()">${E.map(e=>`<option value="${e.id}" ${e.id===id?'selected':''}>${esc(e.name)}</option>`).join('')}</select><button class="btn pri" onclick="quick(0)">Check in now</button><button class="btn" onclick="quick(1)">Check out now</button></div>
+ return `<div class="qc"><select id="qe" aria-label="Employee" onchange="qsel=this.value;render()">${E.map(e=>`<option value="${e.id}" ${e.id===id?'selected':''}>${esc(e.name)}</option>`).join('')}</select><input type="time" id="qt" value="${r.in||nowT()}" title="Check in time, saved with Present or Half day" aria-label="Check in time"><button class="btn pri" onclick="quick(0)">Check in now</button><button class="btn" onclick="quick(1)">Check out now</button></div>
  <div class="qs" role="group" aria-label="Mark today’s status">${B.map(([k,l])=>`<button class="${r.s===k?'on':''}" onclick="qmark('${k}')">${l}</button>`).join('')}</div>
- <p class="qi">Today: <b>${r.s?D[r.s]:'Not marked'}</b>${r.in?' · In '+r.in:''}${r.out?' · Out '+r.out:''}</p>`}
-function qmark(k){const id=$('qe').value;if(!id)return;qsel=id;date=today;setStatus(id,k);toast(D[k]+' marked')}
+ <p class="qi">Today: <b>${r.s?D[r.s]:'Not marked'}</b>${late(r)?' <b style="color:#fda4af">(Late)</b>':''}${r.in?' · In '+r.in:''}${r.out?' · Out '+r.out:''}</p>`}
+function qmark(k){const id=$('qe').value;if(!id)return;qsel=id;date=today;
+ if(k==='P'||k==='HD'){const t=$('qt').value||rec(today,id).in||nowT();patch(id,{s:k,in:t});toast(D[k]+' marked, check in '+t)}
+ else{setStatus(id,k);toast(D[k]+' marked')}}
 function quick(k){const id=$('qe').value;if(!id)return;qsel=id;date=today;k?checkOut(id):checkIn(id)}
 function theme(){const r=document.documentElement,dk=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme:dark)').matches;r.dataset.theme=dk?'light':'dark';try{localStorage.setItem('attendpro.theme',r.dataset.theme)}catch(e){}}
 function topbar(){return `<header class="top"><button class="btn sm" onclick="backup()">Backup</button><button class="btn sm" onclick="logout()">Lock</button><button class="ib" onclick="theme()" aria-label="Switch light or dark theme" title="Light or dark">◐</button><span class="av me" title="HR admin">HR</span></header>`}
@@ -205,11 +211,20 @@ function att(){
 function sheet(){
  const n=dim(month),[y,mo]=month.split('-').map(Number);let h='<th>Employee</th>',off=[];
  for(let d=1;d<=n;d++){const dt=new Date(y,mo-1,d),o=isOff(dt);off[d]=o;h+=`<th class="${o?'off':''}" title="${dt.toDateString()}">${d}</th>`}
- const rows=S.emps.map(e=>{let r=`<td><b>${esc(e.name)}</b></td>`;for(let d=1;d<=n;d++){const s=rec(`${month}-${p2(d)}`,e.id).s;r+=off[d]?'<td class="off">–</td>':`<td>${s?`<span class="${s}">${SH[s]}</span>`:''}</td>`}return `<tr>${r}</tr>`}).join('');
- return `<h1>Monthly sheet</h1><p class="sub">Every employee, every day, at a glance.</p>
+ h+='<th class="sm">P</th><th class="sm">H</th><th class="sm">A</th><th class="sm">PL</th><th class="sm">UL</th><th class="sm">Late</th>';
+ const LL=[];
+ const rows=S.emps.map(e=>{let r=`<td><b>${esc(e.name)}</b></td>`,t={P:0,HD:0,A:0,PL:0,UL:0,L:0};
+  for(let d=1;d<=n;d++){const k=`${month}-${p2(d)}`,x=rec(k,e.id),s=x.s;
+   if(off[d]){r+='<td class="off">-</td>';continue}
+   if(s)t[s]++;const lt=late(x);if(lt){t.L++;LL.push([k,e.name,x.in,mins(x.in)-mins(S.set.start)])}
+   r+=`<td title="${s?D[s]:''}${x.in?' | In '+x.in:''}${x.out?' | Out '+x.out:''}${lt?' | Late':''}">${s?`<span class="${s}">${SH[s]}</span>`:''}${timed(x)&&x.in?`<small class="ti${lt?' lt':''}">${x.in}</small>`:''}${lt?'<small class="lt">Late</small>':''}</td>`}
+  return `<tr>${r}<td class="sm">${t.P}</td><td class="sm">${t.HD}</td><td class="sm">${t.A}</td><td class="sm">${t.PL}</td><td class="sm">${t.UL}</td><td class="sm${t.L?' lt':''}">${t.L}</td></tr>`}).join('');
+ const lrows=LL.map(([k,nm,t,m])=>`<tr><td>${k.split('-').reverse().join('/')}</td><td>${esc(nm)}</td><td>${t}</td><td class="n lt">${m} min</td></tr>`).join('');
+ return `<h1>Monthly sheet</h1><p class="sub">Every employee, every day, with check in time and late arrivals.</p>
  <div class="panel"><div class="bar"><input type="month" value="${month}" onchange="month=this.value||month;render()" aria-label="Month"><span class="gap"></span><button class="btn pri" onclick="exportXlsx()">Export to Excel</button></div>
- <div class="wrap"><table class="cal" style="min-width:${n*28+160}px"><thead><tr>${h}</tr></thead><tbody>${rows}</tbody></table></div>
- <p class="note">P present · H half day · A absent · PL paid leave · UL unpaid leave · – weekly off.</p></div>`}
+ <div class="wrap"><table class="cal" style="min-width:${n*46+330}px"><thead><tr>${h}</tr></thead><tbody>${rows}</tbody></table></div>
+ <p class="note">P present · H half day · A absent · PL paid leave · UL unpaid leave · - weekly off. The small time under P or H is the check in time. Red means late (after ${S.set.start} plus ${S.set.grace} minutes grace).</p></div>
+ <div class="panel"><h2>Late arrivals this month (${LL.length})</h2>${LL.length?`<div class="wrap"><table><thead><tr><th>Date</th><th>Employee</th><th>Check in</th><th class="n">Late by</th></tr></thead><tbody>${lrows}</tbody></table></div>`:'<div class="empty">No late arrivals recorded this month.</div>'}<p class="note">Late by is counted from the shift start time (${S.set.start}).</p></div>`}
 
 function pay(){
  let T={salary:0,ded:0,net:0};
@@ -294,7 +309,7 @@ async function exportXlsx(){
  const P=[['Employee ID','Name','Department','Monthly salary','Working days','Present','Half day','Paid leave','Unpaid leave','Absent','Per day','Deduction','Net salary']];
  const G=[['Employee',...Array.from({length:n},(_,i)=>i+1)]],L=[['Date','Employee ID','Name','Status','Check in','Check out','Hours','Late']];
  S.emps.forEach(e=>{const c=calc(e,month);P.push([e.id,e.name,e.dept,e.salary,c.wd,c.P,c.HD,c.PL,c.UL,c.A,Math.round(c.per),Math.round(c.ded),Math.round(c.net)]);
-  const g=[e.name];for(let d=1;d<=n;d++){const k=`${month}-${p2(d)}`,r=rec(k,e.id);g.push(isOff(new Date(y,mo-1,d))?'-':(r.s?SH[r.s]:''));
+  const g=[e.name];for(let d=1;d<=n;d++){const k=`${month}-${p2(d)}`,r=rec(k,e.id);g.push(isOff(new Date(y,mo-1,d))?'-':(r.s?SH[r.s]+(timed(r)&&r.in?' '+r.in:'')+(late(r)?' LATE':''):''));
    if(r.s){const m=dmin(r);L.push([k,e.id,e.name,D[r.s],r.in||'',r.out||'',m==null?'':Math.round(m/6)/10,late(r)?'Yes':''])}}G.push(g)});
  if(window.XLSX){const wb=XLSX.utils.book_new();
   [['Payroll',P,[12,22,18,14,12,9,9,10,12,8,10,11,12]],['Monthly sheet',G,[22]],['Daily log',L,[12,12,22,13,10,10,8,6]],['Employees',[['ID','Name','Department','Monthly salary'],...S.emps.map(e=>[e.id,e.name,e.dept,e.salary])],[10,22,18,14]]]
