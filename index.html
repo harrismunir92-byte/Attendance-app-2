@@ -97,6 +97,8 @@ dialog{border-radius:16px;box-shadow:0 30px 60px -20px rgba(0,0,0,.5)}
 .qi{margin:12px 0 0;opacity:.9;font-size:13px}
 </style>
 <script src="xlsx.full.min.js"></script>
+<script src="jspdf.umd.min.js"></script>
+<script>window.addEventListener('load',function(){if(!window.jspdf){var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';document.head.appendChild(s)}})</script>
 <script>window.addEventListener('load',function(){if(!window.XLSX){var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';document.head.appendChild(s)}})</script>
 </head>
 <body>
@@ -215,7 +217,7 @@ function pay(){
  return `<tr><td><div class="who">${av(e.name)}<div><b>${esc(e.name)}</b><br><span class="mu">${esc(e.dept)}</span></div></div></td><td class="n">${money(e.salary)}</td><td class="n">${c.wd}</td><td class="n">${c.P}</td><td class="n">${c.HD}</td><td class="n">${c.PL}</td><td class="n">${c.UL}</td><td class="n">${c.A}</td><td class="n">${money(c.per)}</td><td class="n" style="color:var(--r)">${c.ded?'− '+money(c.ded):'–'}</td><td class="n net">${money(c.net)}</td><td class="noprint"><button class="btn sm" onclick="slip('${e.id}')">Payslip</button></td></tr>`}).join('');
  return `<h1>Payroll</h1><p class="sub">Salary is calculated automatically from attendance.</p>
  <div class="grid"><div class="stat" style="border-left-color:var(--b)"><b>${money(T.salary)}</b><span>Gross payroll</span></div><div class="stat" style="border-left-color:var(--r)"><b>${money(T.ded)}</b><span>Total deductions</span></div><div class="stat" style="border-left-color:var(--g)"><b>${money(T.net)}</b><span>Net payable</span></div><div class="stat" style="border-left-color:var(--p)"><b>${S.emps.length}</b><span>Employees paid</span></div></div>
- <div class="panel"><div class="bar"><input type="month" value="${month}" onchange="month=this.value||month;render()" aria-label="Month"><span class="gap"></span><button class="btn" onclick="window.print()">Print</button><button class="btn pri" onclick="exportXlsx()">Export to Excel</button></div>
+ <div class="panel"><div class="bar"><input type="month" value="${month}" onchange="month=this.value||month;render()" aria-label="Month"><span class="gap"></span><button class="btn" onclick="payPdf()">Print / PDF</button><button class="btn pri" onclick="exportXlsx()">Export to Excel</button></div>
  <div class="wrap"><table style="min-width:1000px"><thead><tr><th>Employee</th><th class="n">Monthly salary</th><th class="n">Working days</th><th class="n">Present</th><th class="n">Half day</th><th class="n">Paid leave</th><th class="n">Unpaid leave</th><th class="n">Absent</th><th class="n">Per day</th><th class="n">Deduction</th><th class="n">Net salary</th><th class="noprint"></th></tr></thead><tbody>${rows}</tbody>
  <tfoot><tr><td>Total</td><td class="n">${money(T.salary)}</td><td colspan="7"></td><td class="n">${T.ded?'− '+money(T.ded):'–'}</td><td class="n">${money(T.net)}</td><td class="noprint"></td></tr></tfoot></table></div>${S.emps.length?'':'<div class="empty">No employees to calculate.</div>'}
  <p class="note">Per day = monthly salary ÷ working days (weekly offs excluded). Net = salary − per day × (absent + unpaid leave + ½ × half days). Paid leave is fully paid. Days not yet marked are not deducted.</p></div>`}
@@ -224,7 +226,7 @@ function slip(id){const e=S.emps.find(x=>x.id===id),c=calc(e,month),m=new Date(m
  const row=(a,b,s)=>`<div class="row"><span>${a}</span><b ${s||''}>${b}</b></div>`;
  document.body.classList.add('ps');
  $('dlg').innerHTML=`<h2>${esc(S.set.co)}</h2><p class="sub" style="margin-bottom:12px">Payslip for ${m}</p>${row('Employee',esc(e.name)+' ('+esc(e.id)+')')}${row('Department',esc(e.dept))}${row('Working days',c.wd)}${row('Present / Half day',c.P+' / '+c.HD)}${row('Paid leave / Unpaid leave',c.PL+' / '+c.UL)}${row('Absent',c.A)}${row('Monthly salary',money(e.salary))}${row('Deduction',c.ded?'− '+money(c.ded):'–','style="color:var(--r)"')}${row('Net salary',money(c.net))}
- <div class="bar noprint" style="margin:16px 0 0"><button class="btn pri" onclick="window.print()">Print</button><button class="btn" onclick="$('dlg').close()">Close</button></div>`;
+ <div class="bar noprint" style="margin:16px 0 0"><button class="btn pri" onclick="slipPdf('${id}')">Print / PDF</button><button class="btn" onclick="$('dlg').close()">Close</button></div>`;
  $('dlg').showModal()}
 $('dlg').addEventListener('close',()=>document.body.classList.remove('ps'));
 
@@ -256,6 +258,29 @@ async function dl(filename,data){
  let d=null;try{d=window.claude&&await window.claude.use('downloads')}catch(e){}
  if(d){try{await d.save({filename,data});return true}catch(e){if(e&&e.code!=='declined')toast('Could not save the file');return false}}
  try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data]));a.download=filename;document.body.appendChild(a);a.click();a.remove();return true}catch(e){toast('Could not save the file');return false}}
+const fm=n=>Math.round(n).toLocaleString('en-US');
+const mlabel=()=>new Date(month+'-01T00:00:00').toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+const asc=s=>String(s).replace(/[^\x20-\x7E]/g,'');
+function mkPdf(o){if(!(window.jspdf&&window.jspdf.jsPDF)){toast('PDF tool is still loading. Try again in a moment.');return null}return new window.jspdf.jsPDF({orientation:o,unit:'pt',format:'a4'})}
+async function savePdf(name,doc){const ok=await dl(name,doc.output('arraybuffer'));if(ok)toast('PDF ready. Open it and print from your PDF viewer.')}
+function payPdf(){
+ const doc=mkPdf('landscape');if(!doc)return;
+ const H=['Employee','Salary','Days','Pres','Half','PL','UL','Abs','Per day','Deduction','Net salary'],W=[150,80,40,40,40,40,40,40,70,80,90],X0=40,TW=W.reduce((a,b)=>a+b);
+ let y=0,T={s:0,d:0,n:0};
+ const head=()=>{doc.setTextColor(0);doc.setFont('helvetica','bold');doc.setFontSize(16);doc.text(asc(S.set.co)+' - Payroll report',X0,44);doc.setFontSize(10);doc.setFont('helvetica','normal');doc.text(mlabel()+'   (amounts in PKR)',X0,60);
+  doc.setFillColor(232,237,250);doc.rect(X0,74,TW,22,'F');doc.setFont('helvetica','bold');let x=X0;H.forEach((h,i)=>{if(i)doc.text(h,x+W[i]-5,89,{align:'right'});else doc.text(h,x+5,89);x+=W[i]});doc.setFont('helvetica','normal');y=114};
+ head();
+ const row=(v,bold)=>{if(y>540){doc.addPage();head()}if(bold)doc.setFont('helvetica','bold');let x=X0;v.forEach((t,i)=>{if(i)doc.text(String(t),x+W[i]-5,y,{align:'right'});else doc.text(asc(t),x+5,y);x+=W[i]});doc.setDrawColor(220);doc.line(X0,y+7,X0+TW,y+7);doc.setFont('helvetica','normal');y+=22};
+ S.emps.forEach(e=>{const c=calc(e,month);T.s+=e.salary;T.d+=c.ded;T.n+=c.net;row([e.name,fm(e.salary),c.wd,c.P,c.HD,c.PL,c.UL,c.A,fm(c.per),c.ded?'-'+fm(c.ded):'-',fm(c.net)])});
+ row(['Total',fm(T.s),'','','','','','','',T.d?'-'+fm(T.d):'-',fm(T.n)],true);
+ doc.setFontSize(8);doc.setTextColor(110);doc.text('Per day = salary / working days. Net = salary - per day x (absent + unpaid leave + half of half days). Paid leave is fully paid.',X0,y+14);
+ savePdf('Payroll-'+month+'.pdf',doc)}
+function slipPdf(id){const e=S.emps.find(x=>x.id===id),doc=mkPdf('portrait');if(!e||!doc)return;const c=calc(e,month);
+ doc.setFont('helvetica','bold');doc.setFontSize(20);doc.text(asc(S.set.co),50,70);doc.setFontSize(12);doc.setFont('helvetica','normal');doc.text('Payslip - '+mlabel(),50,92);doc.setDrawColor(36,89,255);doc.setLineWidth(2);doc.line(50,104,545,104);
+ const R=[['Employee',e.name+' ('+e.id+')'],['Department',e.dept],['Working days',c.wd],['Present / Half day',c.P+' / '+c.HD],['Paid leave / Unpaid leave',c.PL+' / '+c.UL],['Absent',c.A],['Monthly salary','PKR '+fm(e.salary)],['Per day','PKR '+fm(c.per)],['Deduction',c.ded?'- PKR '+fm(c.ded):'-'],['Net salary','PKR '+fm(c.net)]];
+ let y=136;R.forEach(([a,b],i)=>{const last=i===R.length-1;doc.setFont('helvetica',last?'bold':'normal');doc.setFontSize(last?14:11);doc.text(a,50,y);doc.text(asc(b),545,y,{align:'right'});doc.setDrawColor(220);doc.setLineWidth(.5);doc.line(50,y+9,545,y+9);y+=28});
+ doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(120);doc.text('Generated by AttendPro on '+new Date().toLocaleDateString('en-GB'),50,y+20);
+ savePdf('Payslip-'+asc(e.name).replace(/\s+/g,'_')+'-'+month+'.pdf',doc)}
 async function backup(){const ok=await dl('attendpro-backup-'+today+'.json',JSON.stringify({app:'AttendPro',saved:new Date().toISOString(),data:S},null,1));
  if(ok){S.lastBackup=new Date().toISOString();save();render();toast('Backup saved')}}
 function restore(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();

@@ -1,4 +1,5 @@
 node_modules/
 android/
 www/xlsx.full.min.js
+www/jspdf.umd.min.js
 .DS_Store
