@@ -1,0 +1,6 @@
+{
+  "appId": "com.attendpro.app",
+  "appName": "AttendPro",
+  "webDir": "www",
+  "server": { "androidScheme": "https" }
+}
