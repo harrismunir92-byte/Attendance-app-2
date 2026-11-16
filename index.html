@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AttendPro – Attendance &amp; Payroll</title>
+<style>
+:root{--bg:#f3f5f9;--card:#fff;--ink:#1b2437;--mute:#667089;--line:#e2e6ef;--brand:#1f4fd8;--bi:#fff;--side:#0f1b3d;
+--g:#0e8a5f;--gb:#e0f5ec;--r:#c8372d;--rb:#fde7e5;--b:#1f4fd8;--bb:#e5ecfd;--a:#a96600;--ab:#fff0d6;--p:#6b3fd1;--pb:#efe8fd;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1220;--card:#161d30;--ink:#e8ecf6;--mute:#93a0bd;--line:#26304a;--brand:#5b86ff;--bi:#0d1220;--side:#0a1022;
+--g:#4ed6a0;--gb:#12362c;--r:#ff8a80;--rb:#3d1b19;--b:#8fb0ff;--bb:#1b2a52;--a:#ffc261;--ab:#3b2c10;--p:#b9a0ff;--pb:#2a1f4d}}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;display:flex;min-height:100vh}
+aside{width:224px;background:var(--side);color:#cfd8f0;padding:20px 12px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;flex:none}
+.logo{font-size:18px;font-weight:700;color:#fff;padding:4px 10px 18px}.logo small{display:block;font-weight:400;font-size:12px;color:#8fa0cc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+aside button{all:unset;cursor:pointer;padding:10px 12px;border-radius:8px}
+aside button:hover{background:rgba(255,255,255,.08)}aside button.on{background:#fff;color:#0f1b3d;font-weight:600}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+main{flex:1;min-width:0;padding:24px 28px 40px}
+h1{font-size:22px;margin:0 0 4px}.sub{color:var(--mute);margin:0 0 20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;border-left-width:4px}
+.stat b{display:block;font-size:24px;line-height:1.25}.stat span{color:var(--mute);font-size:13px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:20px}
+.panel h2{font-size:15px;margin:0 0 12px}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}.bar .gap{flex:1}
+.wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:640px}
+th{text-align:left;font-size:12.5px;color:var(--mute);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle;white-space:nowrap}
+tr:last-child td{border-bottom:0}.n{text-align:right}
+input,select{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:7px;padding:7px 9px}
+input[type=time]{width:112px}td input{width:100%;min-width:90px}td input[type=number]{min-width:120px}
+.btn{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:7px;padding:7px 12px}
+.btn:hover{border-color:var(--brand)}.btn.pri{background:var(--brand);color:var(--bi);border-color:var(--brand);font-weight:600}
+.btn.sm{padding:4px 8px;font-size:12.5px}.btn.del{color:var(--r)}
+.tag{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600}
+.P{background:var(--gb);color:var(--g)}.A{background:var(--rb);color:var(--r)}.PL{background:var(--bb);color:var(--b)}.UL{background:var(--ab);color:var(--a)}.HD{background:var(--pb);color:var(--p)}.X{background:var(--line);color:var(--mute)}
+.net{font-weight:700}tfoot td{font-weight:700;border-top:2px solid var(--line)}
+.empty{color:var(--mute);padding:18px 0;text-align:center}.note{color:var(--mute);font-size:12.5px;margin-top:10px}
+.cal td,.cal th{padding:5px 3px;text-align:center;font-size:12px;min-width:26px}.cal td:first-child,.cal th:first-child{text-align:left;position:sticky;left:0;background:var(--card);min-width:140px;padding-left:8px}
+.cal .off{background:var(--bg);color:var(--mute)}
+.cal span{display:block;border-radius:5px;font-weight:600;padding:1px 0}
+.spark{display:flex;gap:10px;align-items:flex-end;height:110px}.spark div{flex:1;text-align:center;font-size:12px;color:var(--mute)}
+.spark i{display:block;background:var(--brand);border-radius:5px 5px 0 0;min-height:3px;margin-bottom:4px}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.form label{display:flex;flex-direction:column;gap:4px;color:var(--mute);font-size:12.5px}
+.warn{background:var(--ab);color:var(--a);padding:10px 14px;border-radius:8px;margin-bottom:16px}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);padding:24px;width:min(520px,94vw)}
+dialog::backdrop{background:rgba(10,16,34,.55)}dialog h2{margin:0 0 2px}
+.row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)}
+#toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--side);color:#fff;padding:10px 18px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:50}#toast.on{opacity:1}
+@media (max-width:760px){body{flex-direction:column}aside{width:100%;height:auto;position:static;flex-direction:row;overflow-x:auto;padding:10px}aside button{white-space:nowrap}.logo{display:none}main{padding:16px}}
+@media print{aside,.bar,.noprint,#toast{display:none!important}body{background:#fff}main{padding:0}body.ps main{display:none}}
+:root{--bg:#eef1f7;--ink:#101a33;--mute:#64708a;--line:#e3e8f2;--brand:#2459ff;--sh:0 1px 2px rgba(16,26,51,.05),0 10px 24px -12px rgba(16,26,51,.16);--rad:14px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a0f1e;--card:#131a2e;--ink:#e8ecf6;--mute:#93a0bd;--line:#232d48;--brand:#5b86ff;--bi:#0a0f1e;--g:#4ed6a0;--gb:#12362c;--r:#ff8a80;--rb:#3d1b19;--b:#8fb0ff;--bb:#1b2a52;--a:#ffc261;--ab:#3b2c10;--p:#b9a0ff;--pb:#2a1f4d;--sh:0 10px 24px -12px rgba(0,0,0,.6)}}
+:root[data-theme="dark"]{--bg:#0a0f1e;--card:#131a2e;--ink:#e8ecf6;--mute:#93a0bd;--line:#232d48;--brand:#5b86ff;--bi:#0a0f1e;--g:#4ed6a0;--gb:#12362c;--r:#ff8a80;--rb:#3d1b19;--b:#8fb0ff;--bb:#1b2a52;--a:#ffc261;--ab:#3b2c10;--p:#b9a0ff;--pb:#2a1f4d;--sh:0 10px 24px -12px rgba(0,0,0,.6)}
+aside{background:linear-gradient(180deg,#0a1233,#101c52);gap:6px;padding:18px 14px}
+.logo{display:flex;align-items:center;gap:11px;padding:2px 6px 20px}.logo small{margin-top:1px}
+.mk{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#2459ff,#22d3b0);display:grid;place-items:center;color:#fff;font-weight:800;font-size:18px;flex:none}
+aside button{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:11px;transition:background .15s}
+aside button.on{background:linear-gradient(135deg,#2459ff,#5b86ff);color:#fff;box-shadow:0 8px 18px -8px rgba(36,89,255,.8)}
+main{padding:22px 32px 48px;max-width:1500px}
+h1{font-size:24px;letter-spacing:-.2px}
+.top{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-bottom:14px}
+.ib{font:inherit;cursor:pointer;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.av{width:34px;height:34px;border-radius:50%;display:inline-grid;place-items:center;color:#fff;font-weight:700;font-size:12px;flex:none}.av.me{background:var(--brand)}
+.who{display:flex;align-items:center;gap:11px}.mu{color:var(--mute);font-size:12px}
+.hero{display:flex;gap:24px;flex-wrap:wrap;justify-content:space-between;align-items:center;padding:28px 30px;border-radius:20px;margin-bottom:20px;color:#fff;background:radial-gradient(800px 260px at 95% -30%,rgba(34,211,176,.4),transparent),linear-gradient(135deg,#0a1233,#1b2f8f 62%,#2459ff);box-shadow:0 24px 44px -24px rgba(36,89,255,.7)}
+.hero h1{color:#fff;font-size:30px;margin:2px 0 6px}.hi{margin:0;opacity:.8}.hd{margin:0 0 18px;opacity:.85}
+.qc{display:flex;gap:8px;flex-wrap:wrap}.qc select{min-width:190px;background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.28)}.qc option{color:#101a33}
+.qc .btn{background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.3)}.qc .btn.pri{background:#fff;color:#1b2f8f;border-color:#fff}
+.hr{display:flex;align-items:center;gap:18px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:18px;padding:16px 20px}
+.lg{list-style:none;margin:0;padding:0;font-size:13px}.lg li{display:flex;align-items:center;gap:8px;margin:4px 0}.lg i{width:10px;height:10px;border-radius:3px;flex:none}
+.stat,.panel{border-radius:var(--rad);box-shadow:var(--sh)}.stat{border-left-width:5px}.stat b{font-size:22px}
+.panel{padding:20px}.panel h2{font-size:16px}
+thead th{background:var(--bg)}thead th:first-child{border-radius:8px 0 0 8px}thead th:last-child{border-radius:0 8px 8px 0}
+tbody tr:hover{background:color-mix(in srgb,var(--brand) 6%,transparent)}
+.btn{border-radius:9px;transition:border-color .15s,transform .1s}.btn:active{transform:scale(.97)}
+.btn.pri{background:linear-gradient(135deg,#2459ff,#4b7bff);color:#fff;border-color:transparent;box-shadow:0 8px 16px -8px rgba(36,89,255,.7)}
+input,select{border-radius:9px;padding:8px 10px}.srch{min-width:220px}
+.tag::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;margin-right:6px;vertical-align:1px}
+.spark i{background:linear-gradient(180deg,#5b86ff,#2459ff)}
+dialog{border-radius:16px;box-shadow:0 30px 60px -20px rgba(0,0,0,.5)}
+@media (max-width:760px){.logo{display:none}.hero{padding:20px}.hr{width:100%}main{padding:14px}}
+#lock{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;overflow:auto;background:radial-gradient(800px 400px at 80% -10%,rgba(34,211,176,.35),transparent),linear-gradient(135deg,#0a1233,#1b2f8f 65%,#2459ff)}
+#lock[hidden]{display:none}
+.lk{width:min(400px,100%);background:var(--card);color:var(--ink);border-radius:20px;padding:30px 28px;box-shadow:0 30px 60px -20px rgba(0,0,0,.6)}
+.lk .mk{margin-bottom:14px}.lk h2{margin:0 0 4px;font-size:22px}.lk p{color:var(--mute);margin:0 0 18px}
+.lk label{display:flex;flex-direction:column;gap:5px;color:var(--mute);font-size:12.5px;margin-bottom:12px}
+.lk input,.lk .btn{width:100%}.lk .btn{padding:11px;margin-top:4px}.lk .err{color:var(--r);min-height:20px;font-size:13px;margin:0 0 6px}
+.lk a{color:var(--brand);font-size:13px;display:inline-block;margin-top:14px}
+.qs{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.qs button{font:inherit;cursor:pointer;padding:7px 13px;border-radius:99px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff}
+.qs button:hover{background:rgba(255,255,255,.2)}
+.qs button.on{background:#fff;color:#1b2f8f;font-weight:700;border-color:#fff}
+.qi{margin:12px 0 0;opacity:.9;font-size:13px}
+</style>
+<script src="xlsx.full.min.js"></script>
+<script>window.addEventListener('load',function(){if(!window.XLSX){var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';document.head.appendChild(s)}})</script>
+</head>
+<body>
+<aside id="nav"></aside>
+<main id="main"></main>
+<dialog id="dlg"></dialog>
+<div id="lock" hidden></div>
+<div id="toast" role="status"></div>
+<script>
+const KEY='attendpro.v1',DEF={co:'Your Company',start:'09:00',end:'18:00',grace:15,off:'0'};
+const D={P:'Present',A:'Absent',PL:'Paid leave',UL:'Unpaid leave',HD:'Half day'},SH={P:'P',A:'A',PL:'PL',UL:'UL',HD:'H'};
+const NAV=[['dash','Dashboard'],['att','Daily attendance'],['sheet','Monthly sheet'],['pay','Payroll'],['emp','Employees'],['set','Settings & backup']];
+let S=null;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!S||!Array.isArray(S.emps)){S={emps:[{id:'E001',name:'Ayesha Khan',dept:'Finance',salary:120000},{id:'E002',name:'Bilal Ahmed',dept:'Engineering',salary:180000},{id:'E003',name:'Sara Malik',dept:'Human Resources',salary:95000},{id:'E004',name:'Usman Tariq',dept:'Sales',salary:75000}],att:{}}}
+S.att=S.att||{};S.set=Object.assign({},DEF,S.set||{});
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const $=id=>document.getElementById(id),p2=n=>String(n).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());
+const today=iso(new Date());let V='dash',date=today,month=today.slice(0,7);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=n=>'PKR '+Math.round(n).toLocaleString('en-US');
+const rec=(d,id)=>(S.att[d]&&S.att[d][id])||{};
+const nowT=()=>{const d=new Date();return p2(d.getHours())+':'+p2(d.getMinutes())};
+const mins=t=>{const[a,b]=t.split(':').map(Number);return a*60+b};
+const dmin=r=>(r.in&&r.out&&mins(r.out)>=mins(r.in))?mins(r.out)-mins(r.in):null;
+const hrs=r=>{const m=dmin(r);return m==null?'–':Math.floor(m/60)+'h '+p2(m%60)+'m'};
+const timed=r=>r.s==='P'||r.s==='HD';
+const late=r=>timed(r)&&r.in&&mins(r.in)>mins(S.set.start)+S.set.grace;
+const isOff=dt=>S.set.off.split(',').map(Number).includes(dt.getDay());
+const tag=s=>s?`<span class="tag ${s}">${D[s]}</span>`:'<span class="tag X">Not marked</span>';
+let tt;function toast(m){const t=$('toast');t.textContent=m;t.className='on';clearTimeout(tt);tt=setTimeout(()=>t.className='',2600)}
+const dim=m=>{const[y,mo]=m.split('-').map(Number);return new Date(y,mo,0).getDate()};
+
+function patch(id,o){S.att[date]=S.att[date]||{};S.att[date][id]=Object.assign({},rec(date,id),o);save();render()}
+function setStatus(id,v){const o={s:v};if(!(v==='P'||v==='HD')){o.in='';o.out=''}patch(id,o)}
+const setTime=(id,f,v)=>patch(id,{[f]:v});
+const checkIn=id=>{patch(id,{s:rec(date,id).s==='HD'?'HD':'P',in:nowT()});toast('Checked in at '+nowT())};
+const checkOut=id=>{patch(id,{s:rec(date,id).s==='HD'?'HD':'P',out:nowT()});toast('Checked out at '+nowT())};
+function markAll(){S.att[date]=S.att[date]||{};S.emps.forEach(e=>{if(!rec(date,e.id).s)S.att[date][e.id]={s:'P',in:S.set.start,out:''}});save();render();toast('Unmarked employees set to present')}
+function shift(n){const d=new Date(date+'T00:00:00');d.setDate(d.getDate()+n);date=iso(d);render()}
+function calc(e,m){const n=dim(m),[y,mo]=m.split('-').map(Number);let wd=0,c={P:0,A:0,PL:0,UL:0,HD:0};
+ for(let d=1;d<=n;d++){const dt=new Date(y,mo-1,d);if(isOff(dt))continue;wd++;const r=rec(iso(dt),e.id);if(r.s)c[r.s]++}
+ const per=e.salary/wd,ded=per*(c.A+c.UL+c.HD*.5);return Object.assign({wd,per,ded,net:e.salary-ded},c)}
+function addEmp(){const f=k=>$(k).value.trim(),name=f('en'),sal=parseFloat(f('es'));
+ if(!name||!(sal>0)){toast('Enter a name and a monthly salary above 0');return}
+ const mx=Math.max(0,...S.emps.map(e=>parseInt(e.id.slice(1))||0));
+ S.emps.push({id:'E'+String(mx+1).padStart(3,'0'),name,dept:f('ed')||'General',salary:sal});save();render();toast('Employee added')}
+function updEmp(id,f,v){const e=S.emps.find(x=>x.id===id);if(f==='salary')v=Math.max(0,+v||0);if(f==='name'&&!v.trim())return;e[f]=typeof v==='string'?v.trim():v;save();toast('Saved')}
+function delEmp(id){if(!confirm('Delete this employee? Their past attendance stays in a backup only if you have downloaded one.'))return;S.emps=S.emps.filter(e=>e.id!==id);save();render()}
+function upd(k,v){S.set[k]=k==='grace'?Math.max(0,+v||0):v;save();render();toast('Settings saved')}
+function go(v){V=v;render()}
+
+let q='';
+const IC={dash:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',att:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',sheet:'<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/>',pay:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>',emp:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M17 4.5a3.5 3.5 0 0 1 0 7M18.5 14.3c2 .6 3.5 2.4 3.5 5.7"/>',set:'<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>'};
+const av=n=>{const i=n.split(/\s+/).map(w=>w[0]||'').slice(0,2).join('').toUpperCase();let h=0;for(const ch of n)h=(h*31+ch.charCodeAt(0))%360;return `<span class="av" style="background:hsl(${h} 55% 42%)">${esc(i)}</span>`};
+let qsel='';
+function qpanel(){
+ const E=S.emps;if(!E.length)return '<p class="hd">Add employees to start marking attendance.</p>';
+ const id=E.some(e=>e.id===qsel)?qsel:E[0].id,r=rec(today,id);
+ const B=[['P','Present'],['HD','Half day'],['A','Absent'],['PL','Paid leave'],['UL','Unpaid leave']];
+ return `<div class="qc"><select id="qe" aria-label="Employee" onchange="qsel=this.value;render()">${E.map(e=>`<option value="${e.id}" ${e.id===id?'selected':''}>${esc(e.name)}</option>`).join('')}</select><button class="btn pri" onclick="quick(0)">Check in now</button><button class="btn" onclick="quick(1)">Check out now</button></div>
+ <div class="qs" role="group" aria-label="Mark today’s status">${B.map(([k,l])=>`<button class="${r.s===k?'on':''}" onclick="qmark('${k}')">${l}</button>`).join('')}</div>
+ <p class="qi">Today: <b>${r.s?D[r.s]:'Not marked'}</b>${r.in?' · In '+r.in:''}${r.out?' · Out '+r.out:''}</p>`}
+function qmark(k){const id=$('qe').value;if(!id)return;qsel=id;date=today;setStatus(id,k);toast(D[k]+' marked')}
+function quick(k){const id=$('qe').value;if(!id)return;qsel=id;date=today;k?checkOut(id):checkIn(id)}
+function theme(){const r=document.documentElement,dk=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme:dark)').matches;r.dataset.theme=dk?'light':'dark';try{localStorage.setItem('attendpro.theme',r.dataset.theme)}catch(e){}}
+function topbar(){return `<header class="top"><button class="btn sm" onclick="backup()">Backup</button><button class="btn sm" onclick="logout()">Lock</button><button class="ib" onclick="theme()" aria-label="Switch light or dark theme" title="Light or dark">◐</button><span class="av me" title="HR admin">HR</span></header>`}
+function hero(c){const N=S.emps.length||1,R=40,C=2*Math.PI*R,hr=new Date().getHours(),gr=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
+ const K=[['P','Present','#34d399'],['HD','Half day','#a78bfa'],['A','Absent','#fb7185'],['PL','Paid leave','#60a5fa'],['UL','Unpaid leave','#fbbf24'],['X','Not marked','rgba(255,255,255,.25)']];
+ let off=0,seg='';K.forEach(([k,,col])=>{const l=c[k]/N*C;if(l>0){seg+=`<circle cx="50" cy="50" r="${R}" fill="none" stroke="${col}" stroke-width="12" stroke-dasharray="${l} ${C-l}" stroke-dashoffset="${-off}" transform="rotate(-90 50 50)"/>`;off+=l}});
+ return `<section class="hero"><div><p class="hi">${gr}</p><h1>${esc(S.set.co)}</h1><p class="hd">${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'})} · <span id="clk">${new Date().toLocaleTimeString('en-GB')}</span></p>
+ ${qpanel()}</div>
+ <div class="hr"><svg viewBox="0 0 100 100" width="130" height="130" role="img" aria-label="Today’s attendance"><circle cx="50" cy="50" r="${R}" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="12"/>${seg}<text x="50" y="49" text-anchor="middle" font-size="18" font-weight="700" fill="#fff">${Math.round((c.P+c.HD)/N*100)}%</text><text x="50" y="62" text-anchor="middle" font-size="7.5" fill="#c8d3f5">in today</text></svg>
+ <ul class="lg">${K.map(([k,l,col])=>`<li><i style="background:${col}"></i>${l}: <b>${c[k]}</b></li>`).join('')}</ul></div></section>`}
+function dash(){
+ const c={P:0,A:0,PL:0,UL:0,HD:0,X:0,L:0};
+ S.emps.forEach(e=>{const r=rec(today,e.id);r.s?c[r.s]++:c.X++;if(late(r))c.L++});
+ const tot=S.emps.reduce((s,e)=>s+calc(e,today.slice(0,7)).net,0),N=S.emps.length||1;
+ const card=(k,l,col)=>`<div class="stat" style="border-left-color:var(--${col})"><b>${k}</b><span>${l}</span></div>`;
+ let sp='';for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=iso(d);const n=S.emps.filter(e=>{const s=rec(k,e.id).s;return s==='P'||s==='HD'}).length;
+  sp+=`<div><i style="height:${Math.round(n/N*80)}px"></i>${n}<br>${d.toLocaleDateString('en-GB',{weekday:'short'})}</div>`}
+ const rows=S.emps.map(e=>{const r=rec(today,e.id);return `<tr><td>${esc(e.name)}</td><td>${esc(e.dept)}</td><td>${tag(r.s)}${late(r)?' <span class="tag A">Late</span>':''}</td><td>${r.in||'–'}</td><td>${r.out||'–'}</td><td>${hrs(r)}</td></tr>`}).join('');
+ const lb=S.lastBackup?Math.floor((Date.now()-new Date(S.lastBackup))/864e5):null;
+ return `${hero(c)}
+ ${lb==null||lb>=7?`<div class="warn">${lb==null?'You have not downloaded a backup yet.':'Your last backup was '+lb+' days ago.'} <a href="#" onclick="go('set');return false" style="color:inherit;font-weight:600">Back up now</a></div>`:''}
+ <div class="grid">${card(S.emps.length,'Employees','b')}${card(c.P,'Present today','g')}${card(c.A,'Absent today','r')}${card(c.PL+c.UL,'On leave today','a')}${card(c.HD,'Half day today','p')}${card(c.L,'Late arrivals today','r')}${card(money(tot),'Net payroll this month, to date','b')}</div>
+ <div class="panel"><h2>Attendance, last 7 days (present + half day)</h2><div class="spark">${sp}</div></div>
+ <div class="panel"><h2>Today’s attendance</h2><div class="wrap"><table><thead><tr><th>Employee</th><th>Department</th><th>Status</th><th>Check in</th><th>Check out</th><th>Hours</th></tr></thead><tbody>${rows}</tbody></table></div>${S.emps.length?'':'<div class="empty">No employees yet. Add your first employee under Employees.</div>'}</div>`}
+
+function att(){
+ const rows=S.emps.filter(e=>!q||(e.name+' '+e.dept+' '+e.id).toLowerCase().includes(q.toLowerCase())).map(e=>{const r=rec(date,e.id),on=timed(r)?'':'disabled';
+ const opts=['','P','HD','A','PL','UL'].map(k=>`<option value="${k}" ${(r.s||'')===k?'selected':''}>${k?D[k]:'Not marked'}</option>`).join('');
+ return `<tr><td><div class="who">${av(e.name)}<div><b>${esc(e.name)}</b><br><span class="mu">${esc(e.id)} · ${esc(e.dept)}</span></div></div></td>
+ <td><select onchange="setStatus('${e.id}',this.value)" aria-label="Status for ${esc(e.name)}">${opts}</select>${late(r)?' <span class="tag A">Late</span>':''}</td>
+ <td><input type="time" value="${r.in||''}" ${on} onchange="setTime('${e.id}','in',this.value)" aria-label="Check in"> <button class="btn sm" onclick="checkIn('${e.id}')">Now</button></td>
+ <td><input type="time" value="${r.out||''}" ${on} onchange="setTime('${e.id}','out',this.value)" aria-label="Check out"> <button class="btn sm" onclick="checkOut('${e.id}')">Now</button></td><td>${hrs(r)}</td></tr>`}).join('');
+ const off=isOff(new Date(date+'T00:00:00'));
+ return `<h1>Daily attendance</h1><p class="sub">Mark status, check in and check out for each employee.</p>
+ <div class="panel"><div class="bar"><button class="btn" onclick="shift(-1)" aria-label="Previous day">‹</button><input type="date" id="dt" value="${date}" aria-label="Date"><button class="btn" onclick="shift(1)" aria-label="Next day">›</button><button class="btn" onclick="date=today;render()">Today</button><input id="q" class="srch" placeholder="Search employee or department" value="${esc(q)}" oninput="q=this.value;render();const x=$('q');x.focus();x.setSelectionRange(99,99)" aria-label="Search employees"><span class="gap"></span><button class="btn pri" onclick="markAll()">Mark unmarked as present</button></div>
+ ${off?'<p class="note" style="margin:0 0 10px">This date is a weekly off. It is not counted in payroll.</p>':''}
+ <div class="wrap"><table><thead><tr><th>Employee</th><th>Status</th><th>Check in</th><th>Check out</th><th>Hours worked</th></tr></thead><tbody>${rows}</tbody></table></div>${S.emps.length?'':'<div class="empty">No employees yet. Add them under Employees.</div>'}
+ <p class="note">Shift ${S.set.start}–${S.set.end}. Check in after ${p2(Math.floor((mins(S.set.start)+S.set.grace)/60))}:${p2((mins(S.set.start)+S.set.grace)%60)} is flagged Late. Times are editable for Present and Half day.</p></div>`}
+
+function sheet(){
+ const n=dim(month),[y,mo]=month.split('-').map(Number);let h='<th>Employee</th>',off=[];
+ for(let d=1;d<=n;d++){const dt=new Date(y,mo-1,d),o=isOff(dt);off[d]=o;h+=`<th class="${o?'off':''}" title="${dt.toDateString()}">${d}</th>`}
+ const rows=S.emps.map(e=>{let r=`<td><b>${esc(e.name)}</b></td>`;for(let d=1;d<=n;d++){const s=rec(`${month}-${p2(d)}`,e.id).s;r+=off[d]?'<td class="off">–</td>':`<td>${s?`<span class="${s}">${SH[s]}</span>`:''}</td>`}return `<tr>${r}</tr>`}).join('');
+ return `<h1>Monthly sheet</h1><p class="sub">Every employee, every day, at a glance.</p>
+ <div class="panel"><div class="bar"><input type="month" value="${month}" onchange="month=this.value||month;render()" aria-label="Month"><span class="gap"></span><button class="btn pri" onclick="exportXlsx()">Export to Excel</button></div>
+ <div class="wrap"><table class="cal" style="min-width:${n*28+160}px"><thead><tr>${h}</tr></thead><tbody>${rows}</tbody></table></div>
+ <p class="note">P present · H half day · A absent · PL paid leave · UL unpaid leave · – weekly off.</p></div>`}
+
+function pay(){
+ let T={salary:0,ded:0,net:0};
+ const rows=S.emps.map(e=>{const c=calc(e,month);T.salary+=e.salary;T.ded+=c.ded;T.net+=c.net;
+ return `<tr><td><div class="who">${av(e.name)}<div><b>${esc(e.name)}</b><br><span class="mu">${esc(e.dept)}</span></div></div></td><td class="n">${money(e.salary)}</td><td class="n">${c.wd}</td><td class="n">${c.P}</td><td class="n">${c.HD}</td><td class="n">${c.PL}</td><td class="n">${c.UL}</td><td class="n">${c.A}</td><td class="n">${money(c.per)}</td><td class="n" style="color:var(--r)">${c.ded?'− '+money(c.ded):'–'}</td><td class="n net">${money(c.net)}</td><td class="noprint"><button class="btn sm" onclick="slip('${e.id}')">Payslip</button></td></tr>`}).join('');
+ return `<h1>Payroll</h1><p class="sub">Salary is calculated automatically from attendance.</p>
+ <div class="grid"><div class="stat" style="border-left-color:var(--b)"><b>${money(T.salary)}</b><span>Gross payroll</span></div><div class="stat" style="border-left-color:var(--r)"><b>${money(T.ded)}</b><span>Total deductions</span></div><div class="stat" style="border-left-color:var(--g)"><b>${money(T.net)}</b><span>Net payable</span></div><div class="stat" style="border-left-color:var(--p)"><b>${S.emps.length}</b><span>Employees paid</span></div></div>
+ <div class="panel"><div class="bar"><input type="month" value="${month}" onchange="month=this.value||month;render()" aria-label="Month"><span class="gap"></span><button class="btn" onclick="window.print()">Print</button><button class="btn pri" onclick="exportXlsx()">Export to Excel</button></div>
+ <div class="wrap"><table style="min-width:1000px"><thead><tr><th>Employee</th><th class="n">Monthly salary</th><th class="n">Working days</th><th class="n">Present</th><th class="n">Half day</th><th class="n">Paid leave</th><th class="n">Unpaid leave</th><th class="n">Absent</th><th class="n">Per day</th><th class="n">Deduction</th><th class="n">Net salary</th><th class="noprint"></th></tr></thead><tbody>${rows}</tbody>
+ <tfoot><tr><td>Total</td><td class="n">${money(T.salary)}</td><td colspan="7"></td><td class="n">${T.ded?'− '+money(T.ded):'–'}</td><td class="n">${money(T.net)}</td><td class="noprint"></td></tr></tfoot></table></div>${S.emps.length?'':'<div class="empty">No employees to calculate.</div>'}
+ <p class="note">Per day = monthly salary ÷ working days (weekly offs excluded). Net = salary − per day × (absent + unpaid leave + ½ × half days). Paid leave is fully paid. Days not yet marked are not deducted.</p></div>`}
+
+function slip(id){const e=S.emps.find(x=>x.id===id),c=calc(e,month),m=new Date(month+'-01T00:00:00').toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+ const row=(a,b,s)=>`<div class="row"><span>${a}</span><b ${s||''}>${b}</b></div>`;
+ document.body.classList.add('ps');
+ $('dlg').innerHTML=`<h2>${esc(S.set.co)}</h2><p class="sub" style="margin-bottom:12px">Payslip for ${m}</p>${row('Employee',esc(e.name)+' ('+esc(e.id)+')')}${row('Department',esc(e.dept))}${row('Working days',c.wd)}${row('Present / Half day',c.P+' / '+c.HD)}${row('Paid leave / Unpaid leave',c.PL+' / '+c.UL)}${row('Absent',c.A)}${row('Monthly salary',money(e.salary))}${row('Deduction',c.ded?'− '+money(c.ded):'–','style="color:var(--r)"')}${row('Net salary',money(c.net))}
+ <div class="bar noprint" style="margin:16px 0 0"><button class="btn pri" onclick="window.print()">Print</button><button class="btn" onclick="$('dlg').close()">Close</button></div>`;
+ $('dlg').showModal()}
+$('dlg').addEventListener('close',()=>document.body.classList.remove('ps'));
+
+function emp(){
+ const rows=S.emps.map(e=>`<tr><td>${esc(e.id)}</td><td><input value="${esc(e.name)}" onchange="updEmp('${e.id}','name',this.value)" aria-label="Name"></td><td><input value="${esc(e.dept)}" onchange="updEmp('${e.id}','dept',this.value)" aria-label="Department"></td><td><input type="number" min="0" value="${e.salary}" onchange="updEmp('${e.id}','salary',this.value)" aria-label="Monthly salary"></td><td class="n"><button class="btn sm del" onclick="delEmp('${e.id}')">Delete</button></td></tr>`).join('');
+ return `<h1>Employees</h1><p class="sub">Edit any name, department or salary directly in the table.</p>
+ <div class="panel"><h2>Add employee</h2><div class="bar"><input id="en" placeholder="Full name"><input id="ed" placeholder="Department"><input id="es" type="number" min="0" placeholder="Monthly salary (PKR)"><button class="btn pri" onclick="addEmp()">Add employee</button></div></div>
+ <div class="panel"><div class="wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Department</th><th>Monthly salary (PKR)</th><th class="n">Action</th></tr></thead><tbody>${rows}</tbody></table></div>${S.emps.length?'':'<div class="empty">No employees yet. Add your first employee above.</div>'}</div>`}
+
+function set(){const s=S.set;
+ return `<h1>Settings & backup</h1><p class="sub">Company rules and your data.</p>
+ ${secPanel()}
+ <div class="panel"><h2>Company and shift</h2><div class="form">
+ <label>Company name<input value="${esc(s.co)}" onchange="upd('co',this.value.trim()||'Your Company')"></label>
+ <label>Shift start<input type="time" value="${s.start}" onchange="upd('start',this.value||'09:00')"></label>
+ <label>Shift end<input type="time" value="${s.end}" onchange="upd('end',this.value||'18:00')"></label>
+ <label>Late grace (minutes)<input type="number" min="0" value="${s.grace}" onchange="upd('grace',this.value)"></label>
+ <label>Weekly off<select onchange="upd('off',this.value)"><option value="0" ${s.off==='0'?'selected':''}>Sunday only</option><option value="0,6" ${s.off==='0,6'?'selected':''}>Saturday and Sunday</option><option value="5" ${s.off==='5'?'selected':''}>Friday only</option></select></label></div></div>
+ <div class="panel"><h2>Export and backup</h2><div class="bar"><button class="btn pri" onclick="exportXlsx()">Export ${month} to Excel</button><button class="btn pri" onclick="backup()">Download backup</button><label class="btn">Restore backup<input type="file" accept=".json,application/json" hidden onchange="restore(this)"></label><button class="btn del" onclick="resetAll()">Erase all data</button></div>
+ <p class="note">Your data lives in this browser only. Download a backup regularly and keep the file safe. ${S.lastBackup?'Last backup: '+new Date(S.lastBackup).toLocaleString('en-GB'):'No backup downloaded yet.'}</p></div>`}
+
+async function dl(filename,data){
+ const C=window.Capacitor;
+ if(C&&C.isNativePlatform&&C.isNativePlatform()){
+  try{let b;if(typeof data==='string'){b=btoa(unescape(encodeURIComponent(data)))}else{const u=new Uint8Array(data);let t='';for(let i=0;i<u.length;i+=8192)t+=String.fromCharCode.apply(null,u.subarray(i,i+8192));b=btoa(t)}
+   const fn=filename.replace(/[^\w.-]+/g,'_'),r=await C.Plugins.Filesystem.writeFile({path:fn,data:b,directory:'CACHE'});
+   await C.Plugins.Share.share({title:fn,dialogTitle:'Save or send this file',url:r.uri});return true}
+  catch(e){if(!/cancel/i.test(String(e&&e.message)))toast('Could not save the file');return false}}
+ let d=null;try{d=window.claude&&await window.claude.use('downloads')}catch(e){}
+ if(d){try{await d.save({filename,data});return true}catch(e){if(e&&e.code!=='declined')toast('Could not save the file');return false}}
+ try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data]));a.download=filename;document.body.appendChild(a);a.click();a.remove();return true}catch(e){toast('Could not save the file');return false}}
+async function backup(){const ok=await dl('attendpro-backup-'+today+'.json',JSON.stringify({app:'AttendPro',saved:new Date().toISOString(),data:S},null,1));
+ if(ok){S.lastBackup=new Date().toISOString();save();render();toast('Backup saved')}}
+function restore(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();
+ r.onload=()=>{try{const j=JSON.parse(r.result),d=j.data||j;if(!Array.isArray(d.emps)||typeof d.att!=='object')throw 0;
+  if(!confirm('Replace ALL current data with this backup ('+d.emps.length+' employees)?'))return;
+  S=d;S.set=Object.assign({},DEF,d.set||{});save();render();toast('Backup restored')}catch(e){toast('This is not a valid AttendPro backup file')}};
+ r.readAsText(f);inp.value=''}
+function resetAll(){if(!confirm('Erase ALL employees and attendance? Download a backup first. This cannot be undone.'))return;S={emps:[],att:{},set:Object.assign({},DEF,S.set)};save();render();toast('All data erased')}
+async function exportXlsx(){
+ const n=dim(month),[y,mo]=month.split('-').map(Number);
+ const P=[['Employee ID','Name','Department','Monthly salary','Working days','Present','Half day','Paid leave','Unpaid leave','Absent','Per day','Deduction','Net salary']];
+ const G=[['Employee',...Array.from({length:n},(_,i)=>i+1)]],L=[['Date','Employee ID','Name','Status','Check in','Check out','Hours','Late']];
+ S.emps.forEach(e=>{const c=calc(e,month);P.push([e.id,e.name,e.dept,e.salary,c.wd,c.P,c.HD,c.PL,c.UL,c.A,Math.round(c.per),Math.round(c.ded),Math.round(c.net)]);
+  const g=[e.name];for(let d=1;d<=n;d++){const k=`${month}-${p2(d)}`,r=rec(k,e.id);g.push(isOff(new Date(y,mo-1,d))?'-':(r.s?SH[r.s]:''));
+   if(r.s){const m=dmin(r);L.push([k,e.id,e.name,D[r.s],r.in||'',r.out||'',m==null?'':Math.round(m/6)/10,late(r)?'Yes':''])}}G.push(g)});
+ if(window.XLSX){const wb=XLSX.utils.book_new();
+  [['Payroll',P,[12,22,18,14,12,9,9,10,12,8,10,11,12]],['Monthly sheet',G,[22]],['Daily log',L,[12,12,22,13,10,10,8,6]],['Employees',[['ID','Name','Department','Monthly salary'],...S.emps.map(e=>[e.id,e.name,e.dept,e.salary])],[10,22,18,14]]]
+  .forEach(([nm,rows,w])=>{const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=w.map(x=>({wch:x}));XLSX.utils.book_append_sheet(wb,ws,nm)});
+  const buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});
+  if(await dl(`${S.set.co.replace(/[^\w ]/g,'').trim()||'AttendPro'} - ${month}.xlsx`,buf))toast('Excel file saved')}
+ else{const csv=P.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');if(await dl(`payroll-${month}.csv`,csv))toast('Excel library is blocked, saved as CSV instead')}}
+
+function render(){if(!authed)return;
+ $('nav').innerHTML=`<div class="logo"><span class="mk">A</span><div>AttendPro<small>${esc(S.set.co)}</small></div></div>`+NAV.map(([k,l])=>`<button data-v="${k}" class="${k===V?'on':''}" onclick="go('${k}')"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[k]}</svg>${l}</button>`).join('');
+ $('main').innerHTML=topbar()+{dash,att,sheet,pay,emp,set}[V]();
+ const dt=$('dt');if(dt)dt.onchange=()=>{date=dt.value||today;render()}}
+try{const t=localStorage.getItem('attendpro.theme');if(t)document.documentElement.dataset.theme=t}catch(e){}
+setInterval(()=>{const c=$('clk');if(c)c.textContent=new Date().toLocaleTimeString('en-GB')},1000);
+/* ---------- Admin login ---------- */
+const AK='attendpro.auth',LK='attendpro.lock';
+let AUTH=null,authed=false,idleT,hiddenAt=0;
+try{AUTH=JSON.parse(localStorage.getItem(AK))}catch(e){}
+if(!AUTH||!AUTH.h)AUTH=null;
+const saveAuth=()=>{try{localStorage.setItem(AK,JSON.stringify(AUTH))}catch(e){}};
+const hx=b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+async function hashPw(p,salt){
+ try{const e=new TextEncoder(),k=await crypto.subtle.importKey('raw',e.encode(p),'PBKDF2',false,['deriveBits']);
+  return hx(await crypto.subtle.deriveBits({name:'PBKDF2',salt:e.encode(salt),iterations:150000,hash:'SHA-256'},k,256))}
+ catch(x){let h=5381;const t=salt+p;for(let r=0;r<20000;r++)for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i)+r)|0;return 'f'+(h>>>0).toString(16)}}
+const newSalt=()=>{try{return hx(crypto.getRandomValues(new Uint8Array(16)))}catch(e){return String(Math.random()).slice(2)+Date.now()}};
+const LS=()=>{try{return JSON.parse(localStorage.getItem(LK))||{n:0,until:0}}catch(e){return{n:0,until:0}}};
+const setLS=o=>{try{localStorage.setItem(LK,JSON.stringify(o))}catch(e){}};
+function lockUI(mode,msg){
+ const L=$('lock');L.hidden=false;let h;
+ if(mode==='setup')h=`<h2>Create admin account</h2><p>Only you will be able to open AttendPro. Choose a username and a strong password.</p><label>Username<input id="lu" value="admin" autocomplete="username"></label><label>Password (at least 6 characters)<input id="lp" type="password" autocomplete="new-password"></label><label>Confirm password<input id="lc" type="password" autocomplete="new-password"></label><p class="err" id="le"></p><button class="btn pri" onclick="doSetup()">Create account and open</button>`;
+ else if(mode==='forgot')h=`<h2>Reset the app</h2><p>If you forgot the password, the only way in is to erase all data (employees, attendance, settings) and create a new admin. Restore a backup afterwards if you have one.</p><label>Type ERASE to confirm<input id="lu" autocomplete="off"></label><p class="err" id="le"></p><button class="btn pri" style="background:var(--r)" onclick="doReset()">Erase everything</button><br><a href="#" onclick="lockUI('login');return false">Back to sign in</a>`;
+ else h=`<h2>Admin sign in</h2><p>${esc(S.set.co)}</p><label>Username<input id="lu" autocomplete="username"></label><label>Password<input id="lp" type="password" autocomplete="current-password"></label><p class="err" id="le">${msg||''}</p><button class="btn pri" onclick="doLogin()">Sign in</button><br><a href="#" onclick="lockUI('forgot');return false">Forgot password?</a>`;
+ L.innerHTML=`<div class="lk"><span class="mk">A</span>${h}</div>`;
+ L.querySelectorAll('input').forEach(i=>i.onkeydown=e=>{if(e.key==='Enter')({setup:doSetup,login:doLogin,forgot:doReset}[mode])()});
+ setTimeout(()=>{const f=$('lu');if(f)f.focus()},50)}
+async function doSetup(){const u=$('lu').value.trim(),p=$('lp').value,c=$('lc').value,e=$('le');
+ if(!u){e.textContent='Enter a username.';return}
+ if(p.length<6){e.textContent='Password must be at least 6 characters.';return}
+ if(p!==c){e.textContent='Passwords do not match.';return}
+ const salt=newSalt();AUTH={u,salt,h:await hashPw(p,salt),lockMin:5};saveAuth();enter()}
+async function doLogin(){const e=$('le'),st=LS(),now=Date.now();
+ if(st.until>now){e.textContent='Too many attempts. Try again in '+Math.ceil((st.until-now)/1000)+' seconds.';return}
+ const u=$('lu').value.trim(),p=$('lp').value;
+ const ok=u.toLowerCase()===AUTH.u.toLowerCase()&&(await hashPw(p,AUTH.salt))===AUTH.h;
+ if(ok){setLS({n:0,until:0});enter();return}
+ const n=st.n+1;setLS({n,until:n>=5?now+Math.min(15,2**(n-5))*60000:0});
+ e.textContent=n>=5?'Too many attempts. The app is locked for a while.':'Wrong username or password. '+(5-n)+' tries left.'}
+function doReset(){if($('lu').value.trim()!=='ERASE'){$('le').textContent='Type ERASE in capital letters to continue.';return}
+ try{localStorage.removeItem(AK);localStorage.removeItem(LK);localStorage.setItem(KEY,JSON.stringify({emps:[],att:{},set:DEF}))}catch(e){}
+ location.reload()}
+function enter(){authed=true;$('lock').hidden=true;$('lock').innerHTML='';render();resetIdle()}
+function logout(){if(!authed)return;authed=false;clearTimeout(idleT);try{if($('dlg').open)$('dlg').close()}catch(e){}$('main').innerHTML='';$('nav').innerHTML='';lockUI('login')}
+function resetIdle(){clearTimeout(idleT);if(authed&&AUTH.lockMin>0)idleT=setTimeout(logout,AUTH.lockMin*60000)}
+['click','keydown','touchstart','mousemove'].forEach(ev=>document.addEventListener(ev,()=>{if(authed)resetIdle()},{passive:true}));
+document.addEventListener('visibilitychange',()=>{if(document.hidden)hiddenAt=Date.now();else if(authed&&AUTH.lockMin>0&&hiddenAt&&Date.now()-hiddenAt>AUTH.lockMin*60000)logout()});
+function secPanel(){return `<div class="panel"><h2>Admin security</h2><div class="form"><label>Current password<input id="cp" type="password" autocomplete="current-password"></label><label>New password<input id="np" type="password" autocomplete="new-password"></label><label>Confirm new password<input id="nc" type="password" autocomplete="new-password"></label><label>Auto lock<select onchange="AUTH.lockMin=+this.value;saveAuth();resetIdle();toast('Auto lock updated')">${[[0,'Never'],[1,'After 1 minute'],[5,'After 5 minutes'],[15,'After 15 minutes'],[30,'After 30 minutes']].map(([v,l])=>`<option value="${v}" ${AUTH.lockMin===v?'selected':''}>${l}</option>`).join('')}</select></label></div><div class="bar" style="margin:14px 0 0"><button class="btn pri" onclick="chgPw()">Change password</button><button class="btn" onclick="logout()">Lock now</button></div><p class="note">Signed in as <b>${esc(AUTH.u)}</b>. The password is kept on this device only, as a salted hash, and is not included in backups.</p></div>`}
+async function chgPw(){const c=$('cp').value,n=$('np').value;
+ if((await hashPw(c,AUTH.salt))!==AUTH.h){toast('Current password is wrong');return}
+ if(n.length<6){toast('New password must be at least 6 characters');return}
+ if(n!==$('nc').value){toast('New passwords do not match');return}
+ AUTH.salt=newSalt();AUTH.h=await hashPw(n,AUTH.salt);saveAuth();['cp','np','nc'].forEach(i=>$(i).value='');toast('Password changed')}
+function boot(){lockUI(AUTH?'login':'setup')}
+boot();
+</script>
+</body>
+</html>
