@@ -112,7 +112,7 @@ dialog{border-radius:16px;box-shadow:0 30px 60px -20px rgba(0,0,0,.5)}
 <div id="lock" hidden></div>
 <div id="toast" role="status"></div>
 <script>
-const KEY='attendpro.v1',DEF={co:'Your Company',start:'09:00',end:'18:00',grace:15,off:'0'};
+const KEY='attendpro.v1',DEF={co:'Your Company',start:'09:00',end:'18:00',grace:15,off:'0',base:'30'};
 const D={P:'Present',A:'Absent',PL:'Paid leave',UL:'Unpaid leave',HD:'Half day'},SH={P:'P',A:'A',PL:'PL',UL:'UL',HD:'H'};
 const NAV=[['dash','Dashboard'],['att','Daily attendance'],['sheet','Monthly sheet'],['pay','Payroll'],['emp','Employees'],['set','Settings & backup']];
 let S=null;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
@@ -143,9 +143,10 @@ const checkIn=id=>{patch(id,{s:rec(date,id).s==='HD'?'HD':'P',in:nowT()});toast(
 const checkOut=id=>{patch(id,{s:rec(date,id).s==='HD'?'HD':'P',out:nowT()});toast('Checked out at '+nowT())};
 function markAll(){S.att[date]=S.att[date]||{};S.emps.forEach(e=>{if(!rec(date,e.id).s)S.att[date][e.id]={s:'P',in:S.set.start,out:''}});save();render();toast('Unmarked employees set to present')}
 function shift(n){const d=new Date(date+'T00:00:00');d.setDate(d.getDate()+n);date=iso(d);render()}
+const BT={'30':'30 days (weekly offs are paid)','cal':'the calendar days of the month (weekly offs are paid)','work':'working days (weekly offs excluded)'};
 function calc(e,m){const n=dim(m),[y,mo]=m.split('-').map(Number);let wd=0,c={P:0,A:0,PL:0,UL:0,HD:0};
  for(let d=1;d<=n;d++){const dt=new Date(y,mo-1,d);if(isOff(dt))continue;wd++;const r=rec(iso(dt),e.id);if(r.s)c[r.s]++}
- const per=e.salary/wd,ded=per*(c.A+c.UL+c.HD*.5);return Object.assign({wd,per,ded,net:e.salary-ded},c)}
+ const bd=S.set.base==='cal'?n:S.set.base==='work'?wd:30,per=e.salary/bd,ded=Math.min(e.salary,per*(c.A+c.UL+c.HD*.5));return Object.assign({wd,bd,per,ded,net:e.salary-ded},c)}
 function addEmp(){const f=k=>$(k).value.trim(),name=f('en'),sal=parseFloat(f('es'));
  if(!name||!(sal>0)){toast('Enter a name and a monthly salary above 0');return}
  const mx=Math.max(0,...S.emps.map(e=>parseInt(e.id.slice(1))||0));
@@ -229,18 +230,18 @@ function sheet(){
 function pay(){
  let T={salary:0,ded:0,net:0};
  const rows=S.emps.map(e=>{const c=calc(e,month);T.salary+=e.salary;T.ded+=c.ded;T.net+=c.net;
- return `<tr><td><div class="who">${av(e.name)}<div><b>${esc(e.name)}</b><br><span class="mu">${esc(e.dept)}</span></div></div></td><td class="n">${money(e.salary)}</td><td class="n">${c.wd}</td><td class="n">${c.P}</td><td class="n">${c.HD}</td><td class="n">${c.PL}</td><td class="n">${c.UL}</td><td class="n">${c.A}</td><td class="n">${money(c.per)}</td><td class="n" style="color:var(--r)">${c.ded?'− '+money(c.ded):'–'}</td><td class="n net">${money(c.net)}</td><td class="noprint"><button class="btn sm" onclick="slip('${e.id}')">Payslip</button></td></tr>`}).join('');
+ return `<tr><td><div class="who">${av(e.name)}<div><b>${esc(e.name)}</b><br><span class="mu">${esc(e.dept)}</span></div></div></td><td class="n">${money(e.salary)}</td><td class="n">${c.bd}</td><td class="n">${c.P}</td><td class="n">${c.HD}</td><td class="n">${c.PL}</td><td class="n">${c.UL}</td><td class="n">${c.A}</td><td class="n">${money(c.per)}</td><td class="n" style="color:var(--r)">${c.ded?'− '+money(c.ded):'–'}</td><td class="n net">${money(c.net)}</td><td class="noprint"><button class="btn sm" onclick="slip('${e.id}')">Payslip</button></td></tr>`}).join('');
  return `<h1>Payroll</h1><p class="sub">Salary is calculated automatically from attendance.</p>
  <div class="grid"><div class="stat" style="border-left-color:var(--b)"><b>${money(T.salary)}</b><span>Gross payroll</span></div><div class="stat" style="border-left-color:var(--r)"><b>${money(T.ded)}</b><span>Total deductions</span></div><div class="stat" style="border-left-color:var(--g)"><b>${money(T.net)}</b><span>Net payable</span></div><div class="stat" style="border-left-color:var(--p)"><b>${S.emps.length}</b><span>Employees paid</span></div></div>
  <div class="panel"><div class="bar"><input type="month" value="${month}" onchange="month=this.value||month;render()" aria-label="Month"><span class="gap"></span><button class="btn" onclick="payPdf()">Print / PDF</button><button class="btn pri" onclick="exportXlsx()">Export to Excel</button></div>
- <div class="wrap"><table style="min-width:1000px"><thead><tr><th>Employee</th><th class="n">Monthly salary</th><th class="n">Working days</th><th class="n">Present</th><th class="n">Half day</th><th class="n">Paid leave</th><th class="n">Unpaid leave</th><th class="n">Absent</th><th class="n">Per day</th><th class="n">Deduction</th><th class="n">Net salary</th><th class="noprint"></th></tr></thead><tbody>${rows}</tbody>
+ <div class="wrap"><table style="min-width:1000px"><thead><tr><th>Employee</th><th class="n">Monthly salary</th><th class="n">Salary days</th><th class="n">Present</th><th class="n">Half day</th><th class="n">Paid leave</th><th class="n">Unpaid leave</th><th class="n">Absent</th><th class="n">Per day</th><th class="n">Deduction</th><th class="n">Net salary</th><th class="noprint"></th></tr></thead><tbody>${rows}</tbody>
  <tfoot><tr><td>Total</td><td class="n">${money(T.salary)}</td><td colspan="7"></td><td class="n">${T.ded?'− '+money(T.ded):'–'}</td><td class="n">${money(T.net)}</td><td class="noprint"></td></tr></tfoot></table></div>${S.emps.length?'':'<div class="empty">No employees to calculate.</div>'}
- <p class="note">Per day = monthly salary ÷ working days (weekly offs excluded). Net = salary − per day × (absent + unpaid leave + ½ × half days). Paid leave is fully paid. Days not yet marked are not deducted.</p></div>`}
+ <p class="note">Per day = monthly salary ÷ ${BT[S.set.base]}. Net = salary − per day × (absent + unpaid leave + ½ × half days). Paid leave is fully paid. Days not yet marked are not deducted.</p></div>`}
 
 function slip(id){const e=S.emps.find(x=>x.id===id),c=calc(e,month),m=new Date(month+'-01T00:00:00').toLocaleDateString('en-GB',{month:'long',year:'numeric'});
  const row=(a,b,s)=>`<div class="row"><span>${a}</span><b ${s||''}>${b}</b></div>`;
  document.body.classList.add('ps');
- $('dlg').innerHTML=`<h2>${esc(S.set.co)}</h2><p class="sub" style="margin-bottom:12px">Payslip for ${m}</p>${row('Employee',esc(e.name)+' ('+esc(e.id)+')')}${row('Department',esc(e.dept))}${row('Working days',c.wd)}${row('Present / Half day',c.P+' / '+c.HD)}${row('Paid leave / Unpaid leave',c.PL+' / '+c.UL)}${row('Absent',c.A)}${row('Monthly salary',money(e.salary))}${row('Deduction',c.ded?'− '+money(c.ded):'–','style="color:var(--r)"')}${row('Net salary',money(c.net))}
+ $('dlg').innerHTML=`<h2>${esc(S.set.co)}</h2><p class="sub" style="margin-bottom:12px">Payslip for ${m}</p>${row('Employee',esc(e.name)+' ('+esc(e.id)+')')}${row('Department',esc(e.dept))}${row('Salary days (basis)',c.bd)}${row('Present / Half day',c.P+' / '+c.HD)}${row('Paid leave / Unpaid leave',c.PL+' / '+c.UL)}${row('Absent',c.A)}${row('Monthly salary',money(e.salary))}${row('Deduction',c.ded?'− '+money(c.ded):'–','style="color:var(--r)"')}${row('Net salary',money(c.net))}
  <div class="bar noprint" style="margin:16px 0 0"><button class="btn pri" onclick="slipPdf('${id}')">Print / PDF</button><button class="btn" onclick="$('dlg').close()">Close</button></div>`;
  $('dlg').showModal()}
 $('dlg').addEventListener('close',()=>document.body.classList.remove('ps'));
@@ -259,6 +260,7 @@ function set(){const s=S.set;
  <label>Shift start<input type="time" value="${s.start}" onchange="upd('start',this.value||'09:00')"></label>
  <label>Shift end<input type="time" value="${s.end}" onchange="upd('end',this.value||'18:00')"></label>
  <label>Late grace (minutes)<input type="number" min="0" value="${s.grace}" onchange="upd('grace',this.value)"></label>
+ <label>Salary per day is based on<select onchange="upd('base',this.value)"><option value="30" ${s.base==='30'?'selected':''}>Fixed 30 days (Sunday paid)</option><option value="cal" ${s.base==='cal'?'selected':''}>Calendar days of the month</option><option value="work" ${s.base==='work'?'selected':''}>Working days only</option></select></label>
  <label>Weekly off<select onchange="upd('off',this.value)"><option value="0" ${s.off==='0'?'selected':''}>Sunday only</option><option value="0,6" ${s.off==='0,6'?'selected':''}>Saturday and Sunday</option><option value="5" ${s.off==='5'?'selected':''}>Friday only</option></select></label></div></div>
  <div class="panel"><h2>Export and backup</h2><div class="bar"><button class="btn pri" onclick="exportXlsx()">Export ${month} to Excel</button><button class="btn pri" onclick="backup()">Download backup</button><label class="btn">Restore backup<input type="file" accept=".json,application/json" hidden onchange="restore(this)"></label><button class="btn del" onclick="resetAll()">Erase all data</button></div>
  <p class="note">Your data lives in this browser only. Download a backup regularly and keep the file safe. ${S.lastBackup?'Last backup: '+new Date(S.lastBackup).toLocaleString('en-GB'):'No backup downloaded yet.'}</p></div>`}
@@ -280,19 +282,19 @@ function mkPdf(o){if(!(window.jspdf&&window.jspdf.jsPDF)){toast('PDF tool is sti
 async function savePdf(name,doc){const ok=await dl(name,doc.output('arraybuffer'));if(ok)toast('PDF ready. Open it and print from your PDF viewer.')}
 function payPdf(){
  const doc=mkPdf('landscape');if(!doc)return;
- const H=['Employee','Salary','Days','Pres','Half','PL','UL','Abs','Per day','Deduction','Net salary'],W=[150,80,40,40,40,40,40,40,70,80,90],X0=40,TW=W.reduce((a,b)=>a+b);
+ const H=['Employee','Salary','Basis','Pres','Half','PL','UL','Abs','Per day','Deduction','Net salary'],W=[150,80,40,40,40,40,40,40,70,80,90],X0=40,TW=W.reduce((a,b)=>a+b);
  let y=0,T={s:0,d:0,n:0};
  const head=()=>{doc.setTextColor(0);doc.setFont('helvetica','bold');doc.setFontSize(16);doc.text(asc(S.set.co)+' - Payroll report',X0,44);doc.setFontSize(10);doc.setFont('helvetica','normal');doc.text(mlabel()+'   (amounts in PKR)',X0,60);
   doc.setFillColor(232,237,250);doc.rect(X0,74,TW,22,'F');doc.setFont('helvetica','bold');let x=X0;H.forEach((h,i)=>{if(i)doc.text(h,x+W[i]-5,89,{align:'right'});else doc.text(h,x+5,89);x+=W[i]});doc.setFont('helvetica','normal');y=114};
  head();
  const row=(v,bold)=>{if(y>540){doc.addPage();head()}if(bold)doc.setFont('helvetica','bold');let x=X0;v.forEach((t,i)=>{if(i)doc.text(String(t),x+W[i]-5,y,{align:'right'});else doc.text(asc(t),x+5,y);x+=W[i]});doc.setDrawColor(220);doc.line(X0,y+7,X0+TW,y+7);doc.setFont('helvetica','normal');y+=22};
- S.emps.forEach(e=>{const c=calc(e,month);T.s+=e.salary;T.d+=c.ded;T.n+=c.net;row([e.name,fm(e.salary),c.wd,c.P,c.HD,c.PL,c.UL,c.A,fm(c.per),c.ded?'-'+fm(c.ded):'-',fm(c.net)])});
+ S.emps.forEach(e=>{const c=calc(e,month);T.s+=e.salary;T.d+=c.ded;T.n+=c.net;row([e.name,fm(e.salary),c.bd,c.P,c.HD,c.PL,c.UL,c.A,fm(c.per),c.ded?'-'+fm(c.ded):'-',fm(c.net)])});
  row(['Total',fm(T.s),'','','','','','','',T.d?'-'+fm(T.d):'-',fm(T.n)],true);
- doc.setFontSize(8);doc.setTextColor(110);doc.text('Per day = salary / working days. Net = salary - per day x (absent + unpaid leave + half of half days). Paid leave is fully paid.',X0,y+14);
+ doc.setFontSize(8);doc.setTextColor(110);doc.text('Per day = salary / salary basis days. Net = salary - per day x (absent + unpaid leave + half of half days). Paid leave is fully paid.',X0,y+14);
  savePdf('Payroll-'+month+'.pdf',doc)}
 function slipPdf(id){const e=S.emps.find(x=>x.id===id),doc=mkPdf('portrait');if(!e||!doc)return;const c=calc(e,month);
  doc.setFont('helvetica','bold');doc.setFontSize(20);doc.text(asc(S.set.co),50,70);doc.setFontSize(12);doc.setFont('helvetica','normal');doc.text('Payslip - '+mlabel(),50,92);doc.setDrawColor(36,89,255);doc.setLineWidth(2);doc.line(50,104,545,104);
- const R=[['Employee',e.name+' ('+e.id+')'],['Department',e.dept],['Working days',c.wd],['Present / Half day',c.P+' / '+c.HD],['Paid leave / Unpaid leave',c.PL+' / '+c.UL],['Absent',c.A],['Monthly salary','PKR '+fm(e.salary)],['Per day','PKR '+fm(c.per)],['Deduction',c.ded?'- PKR '+fm(c.ded):'-'],['Net salary','PKR '+fm(c.net)]];
+ const R=[['Employee',e.name+' ('+e.id+')'],['Department',e.dept],['Salary days (basis)',c.bd],['Present / Half day',c.P+' / '+c.HD],['Paid leave / Unpaid leave',c.PL+' / '+c.UL],['Absent',c.A],['Monthly salary','PKR '+fm(e.salary)],['Per day','PKR '+fm(c.per)],['Deduction',c.ded?'- PKR '+fm(c.ded):'-'],['Net salary','PKR '+fm(c.net)]];
  let y=136;R.forEach(([a,b],i)=>{const last=i===R.length-1;doc.setFont('helvetica',last?'bold':'normal');doc.setFontSize(last?14:11);doc.text(a,50,y);doc.text(asc(b),545,y,{align:'right'});doc.setDrawColor(220);doc.setLineWidth(.5);doc.line(50,y+9,545,y+9);y+=28});
  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(120);doc.text('Generated by AttendPro on '+new Date().toLocaleDateString('en-GB'),50,y+20);
  savePdf('Payslip-'+asc(e.name).replace(/\s+/g,'_')+'-'+month+'.pdf',doc)}
@@ -306,9 +308,9 @@ function restore(inp){const f=inp.files[0];if(!f)return;const r=new FileReader()
 function resetAll(){if(!confirm('Erase ALL employees and attendance? Download a backup first. This cannot be undone.'))return;S={emps:[],att:{},set:Object.assign({},DEF,S.set)};save();render();toast('All data erased')}
 async function exportXlsx(){
  const n=dim(month),[y,mo]=month.split('-').map(Number);
- const P=[['Employee ID','Name','Department','Monthly salary','Working days','Present','Half day','Paid leave','Unpaid leave','Absent','Per day','Deduction','Net salary']];
+ const P=[['Employee ID','Name','Department','Monthly salary','Salary basis days','Present','Half day','Paid leave','Unpaid leave','Absent','Per day','Deduction','Net salary']];
  const G=[['Employee',...Array.from({length:n},(_,i)=>i+1)]],L=[['Date','Employee ID','Name','Status','Check in','Check out','Hours','Late']];
- S.emps.forEach(e=>{const c=calc(e,month);P.push([e.id,e.name,e.dept,e.salary,c.wd,c.P,c.HD,c.PL,c.UL,c.A,Math.round(c.per),Math.round(c.ded),Math.round(c.net)]);
+ S.emps.forEach(e=>{const c=calc(e,month);P.push([e.id,e.name,e.dept,e.salary,c.bd,c.P,c.HD,c.PL,c.UL,c.A,Math.round(c.per),Math.round(c.ded),Math.round(c.net)]);
   const g=[e.name];for(let d=1;d<=n;d++){const k=`${month}-${p2(d)}`,r=rec(k,e.id);g.push(isOff(new Date(y,mo-1,d))?'-':(r.s?SH[r.s]+(timed(r)&&r.in?' '+r.in:'')+(late(r)?' LATE':''):''));
    if(r.s){const m=dmin(r);L.push([k,e.id,e.name,D[r.s],r.in||'',r.out||'',m==null?'':Math.round(m/6)/10,late(r)?'Yes':''])}}G.push(g)});
  if(window.XLSX){const wb=XLSX.utils.book_new();
